@@ -22,6 +22,9 @@
 `npm install -g nodemon`
 `nodemon`
 
+# CRM Diagram
+![crm_diagram](https://github.com/missycoder/MySQL-Customer-Relationship-Management/assets/156276105/2ae1634a-90bd-4b90-9cce-19ac8e77d2cb)
+
 # Create a new database user
 In the MySQL CLI:
 ```
