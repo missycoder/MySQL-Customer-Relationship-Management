@@ -13,13 +13,6 @@
 `describe Customers;`
 `show tables;`
 
-`describe employees;`
-`describe taskforces;`
-`describe departments;`
-`select * from employees;`
-`select * from taskforces;`
-`select * from departments;`
-
 # Express Commands
 `npm init -y`
 `npm install express hbs wax-on dotenv mysql2 handlebars-helpers`
