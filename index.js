@@ -23,123 +23,126 @@ app.use(express.urlencoded({ extended: false }));
 wax.on(hbs.handlebars);
 wax.setLayoutPath('./views/layouts');
 
-let connection;
-
 async function main() {
-    // Establish database connection
-    connection = await createConnection({
-        'host': process.env.DB_HOST,
-        'user': process.env.DB_USER,
-        'database': process.env.DB_DATABASE,
-        'password': process.env.DB_PASSWORD
-    });
+    try {
+        // Establish database connection
+        const connection = await createConnection({
+            'host': process.env.DB_HOST,
+            'user': process.env.DB_USER,
+            'database': process.env.DB_DATABASE,
+            'password': process.env.DB_PASSWORD
+        });
+
+        // Route to retrieve and display customers
+        app.get('/customers', async (req, res) => {
+            try {
+                const [customers] = await connection.execute(`
+                SELECT Customers.*, Companies.name AS company_name FROM Customers JOIN
+                Companies ON Customers.company_id = Companies.company_id
+                ORDER BY first_name
+                `);
+                res.render('customers/index', {
+                    'customers': customers
+                });
+            } catch (error) {
+                console.error("Error retrieving customers:", error);
+                res.status(500).send("Internal server error");
+            }
+        });
+
+        // Route to render form for CREATING customers
+        app.get('/create-customers', async function (req, res) {
+            try {
+                const [companies] = await connection.execute(`SELECT * FROM COMPANIES`);
+                res.render('create-customers', { companies });
+            } catch (error) {
+                console.error("Error retrieving companies:", error);
+                res.status(500).send("Internal server error");
+            }
+        });
+
+        // Route to handle submission of customer creation form
+        app.post('/create-customers', async function (req, res) {
+            try {
+                const { first_name, last_name, rating, company_id } = req.body;
+                const query = `INSERT INTO Customers(first_name, last_name, rating, company_id) 
+                            VALUES (?, ?, ?, ?);`;
+                await connection.execute(query, [first_name, last_name, rating, company_id]);
+                res.status(200).send("Customer created successfully");
+            } catch (error) {
+                console.error("Error creating customer:", error);
+                res.status(500).send("Internal server error");
+            }
+        });
+
+        // Route to render form for UPDATING customers
+        app.get('/update-customers/:customerId', async (req, res) => {
+            try {
+                const { customerId } = req.params;
+                const query = `SELECT * FROM Customers WHERE customer_id = ?;`;
+                const [customers] = await connection.execute(query, [customerId]);
+                const customerToUpdate = customers[0];
+                const [companies] = await connection.execute("SELECT * FROM Companies");
+                res.render('update-customers', {
+                    'customer': customerToUpdate,
+                    'companies': companies
+                });
+            } catch (error) {
+                console.error("Error retrieving customer details for update:", error);
+                res.status(500).send("Internal server error");
+            }
+        });
+
+        // Route to handle submission of customer update form
+        app.post('/update-customers/:customerId', async function (req, res) {
+            try {
+                const { customerId } = req.params;
+                const { first_name, last_name, rating, company_id } = req.body;
+                const query = `UPDATE Customers SET first_name = ?, last_name = ?, 
+                            rating = ?, company_id = ? WHERE customer_id = ?`;
+                await connection.execute(query, [first_name, last_name, rating, company_id, customerId]);
+                res.redirect('/customers');
+            } catch (error) {
+                console.error("Error updating customer:", error);
+                res.status(500).send("Internal server error");
+            }
+        });
+
+        // Route to render form for DELETING customers
+        app.get('/delete-customers/:customerId', async function (req, res) {
+            try {
+                const { customerId } = req.params;
+                const [customers] = await connection.execute(`SELECT * FROM Customers WHERE customer_id = ?`, [customerId]);
+                const customerToDelete = customers[0];
+                res.render('delete-customers', { 'customer': customerToDelete });
+            } catch (error) {
+                console.error("Error retrieving customer details for delete:", error);
+                res.status(500).send("Internal server error");
+            }
+        });
+
+        // Route to handle deletion of customers
+        app.post('/delete-customers/:customerId', async function (req, res) {
+            try {
+                const { customerId } = req.params;
+                const query = `DELETE FROM Customers WHERE customer_id = ?`;
+                await connection.execute(query, [customerId]);
+                res.redirect('/customers');
+            } catch (error) {
+                console.error("Error deleting customer:", error);
+                res.status(500).send("Internal server error");
+            }
+        });
+
+        // Start the server
+        app.listen(3000, () => {
+            console.log('Server has started');
+        });
+    } catch (error) {
+        console.error("Error establishing database connection:", error);
+        process.exit(1); // Exit the process if there's an error
+    }
 }
-
-// Route to retrieve and display customers
-app.get('/customers', async (req, res) => {
-    try {
-        const [customers] = await connection.execute(`
-        SELECT Customers.*, Companies.name AS company_name FROM Customers JOIN
-        Companies ON Customers.company_id = Companies.company_id
-        ORDER BY first_name
-        `);
-        res.render('customers/index', {
-            'customers': customers
-        });
-    } catch (error) {
-        console.error("Error retrieving customers:", error);
-        res.status(500).send("Internal server error");
-    }
-});
-
-// Route to render form for creating customers
-app.get('/create-customers', async function (req, res) {
-    try {
-        const [companies] = await connection.execute(`SELECT * FROM COMPANIES`);
-        res.render('create-customers', { companies });
-    } catch (error) {
-        console.error("Error retrieving companies:", error);
-        res.status(500).send("Internal server error");
-    }
-});
-
-// Route to handle submission of customer creation form
-app.post('/create-customers', async function (req, res) {
-    try {
-        const { first_name, last_name, rating, company_id } = req.body;
-        const query = `INSERT INTO Customers(first_name, last_name, rating, company_id) 
-                       VALUES (?, ?, ?, ?);`;
-        await connection.execute(query, [first_name, last_name, rating, company_id]);
-        res.status(200).send("Customer created successfully");
-    } catch (error) {
-        console.error("Error creating customer:", error);
-        res.status(500).send("Internal server error");
-    }
-});
-
-// Route to render form for updating customers
-app.get('/update-customers/:customerId', async (req, res) => {
-    try {
-        const { customerId } = req.params;
-        const query = `SELECT * FROM Customers WHERE customer_id = ?;`;
-        const [customers] = await connection.execute(query, [customerId]);
-        const customerToUpdate = customers[0];
-        const [companies] = await connection.execute("SELECT * FROM Companies");
-        res.render('update-customers', {
-            'customer': customerToUpdate,
-            'companies': companies
-        });
-    } catch (error) {
-        console.error("Error retrieving customer details for update:", error);
-        res.status(500).send("Internal server error");
-    }
-});
-
-// Route to handle submission of customer update form
-app.post('/update-customers/:customerId', async function (req, res) {
-    try {
-        const { customerId } = req.params;
-        const { first_name, last_name, rating, company_id } = req.body;
-        const query = `UPDATE Customers SET first_name = ?, last_name = ?, 
-                       rating = ?, company_id = ? WHERE customer_id = ?`;
-        await connection.execute(query, [first_name, last_name, rating, company_id, customerId]);
-        res.redirect('/customers');
-    } catch (error) {
-        console.error("Error updating customer:", error);
-        res.status(500).send("Internal server error");
-    }
-});
-
-// Route to render form for deleting customers
-app.get('/delete-customers/:customerId', async function (req, res) {
-    try {
-        const { customerId } = req.params;
-        const [customers] = await connection.execute(`SELECT * FROM Customers WHERE customer_id = ?`, [customerId]);
-        const customerToDelete = customers[0];
-        res.render('delete-customers', { 'customer': customerToDelete });
-    } catch (error) {
-        console.error("Error retrieving customer details for delete:", error);
-        res.status(500).send("Internal server error");
-    }
-});
-
-// Route to handle deletion of customers
-app.post('/delete-customers/:customerId', async function (req, res) {
-    try {
-        const { customerId } = req.params;
-        const query = `DELETE FROM Customers WHERE customer_id = ?`;
-        await connection.execute(query, [customerId]);
-        res.redirect('/customers');
-    } catch (error) {
-        console.error("Error deleting customer:", error);
-        res.status(500).send("Internal server error");
-    }
-});
-
-// Start the server
-app.listen(3000, () => {
-    console.log('Server has started');
-});
 
 // Call main function to establish database connection
 main();
