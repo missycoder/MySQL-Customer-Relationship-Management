@@ -1,4 +1,33 @@
-To start mysql, in the terminal, type in `mysql -u root`
+# Schema
+`mysql -u root < schema.sql`
+`mysql -u root < data.sql`
+
+# Setup MySQL
+`mysql -u root`
+
+# MySQL Commands
+`show databases;`
+`use crm;`
+`select * from Companies;`
+`select * from Customers;`
+`describe Customers;`
+`show tables;`
+
+`describe employees;`
+`describe taskforces;`
+`describe departments;`
+`select * from employees;`
+`select * from taskforces;`
+`select * from departments;`
+
+# Express Commands
+`npm init -y`
+`npm install express hbs wax-on dotenv mysql2`
+
+# Setup Express
+`create index.js file`
+`npm install -g nodemon`
+`nodemon`
 
 # Create a new database user
 In the MySQL CLI:
