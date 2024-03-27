@@ -1,3 +1,6 @@
+-- SELECT Customers;
+SELECT * FROM Customers WHERE customer_id=1; -- Jasmine Aladdin
+
 -- CREATE (INSERT) Customers;
 INSERT INTO Customers (first_name, last_name, rating, company_id)
 VALUES ("Steve", "Jobs", 5, 1),

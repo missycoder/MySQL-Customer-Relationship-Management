@@ -6,7 +6,8 @@
         <th>First Name</th>
         <th>Last Name</th>
         <th>Rating</th>
-        <th>Company</th>
+        <th>Company ID</th>
+        <th></th>
     </tr>
     {{#each customers}}
     <tr>
@@ -14,6 +15,9 @@
         <td>{{this.last_name}}</td>
         <td>{{this.rating}}</td>
         <td>{{this.company_name}}</td>
+        <td>
+            <a href="/delete-customers/{{this.customer_id}}" class="btn btn-danger btn-sm-">Delete</a>
+        </td>
     </tr>
     {{/each}}
 </table>

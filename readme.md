@@ -22,7 +22,7 @@
 
 # Express Commands
 `npm init -y`
-`npm install express hbs wax-on dotenv mysql2`
+`npm install express hbs wax-on dotenv mysql2 handlebars-helpers`
 
 # Setup Express
 `create index.js file`

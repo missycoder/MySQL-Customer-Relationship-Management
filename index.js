@@ -11,7 +11,7 @@ const app = express();
 app.set('view engine', 'hbs');
 
 require('handlebars-helpers')({
-    handlebars : hbs.handlebars
+    handlebars: hbs.handlebars
 })
 
 //enable static files
@@ -66,6 +66,64 @@ app.post('/create-customers', async function (req, res) {
     const response = await connection.execute(query);
 })
 
+
+// UPDATE Customers
+app.get('/update-customers/:customerId', async (req, res) => {
+    const { customerId } = req.params;
+
+    const query = `SELECT * FROM Customers WHERE customer_id = ${customerId};`
+    const [customers] = await connection.execute(query);
+    const customerToUpdate = customers[0];
+    const [companies] = await connection.execute("SELECT * FROM Companies");
+
+    res.render('update-customers', {
+        'customer': customerToUpdate,
+        'companies': companies
+    })
+})
+
+app.post('/update-customers/:customerId', async function (req, res) {
+    const { customerId } = req.params;
+    const { first_name, last_name, rating, company_id } = req.body;
+    const query = `UPDATE Customers SET first_name = "${first_name}",
+                    last_name = "${last_name}", 
+                    rating = ${rating},
+                    company_id = ${company_id},
+                    WHERE customer_id = ${customerId}`
+
+    await connection.execute(query);
+    res.redirect('/customers');
+})
+
+
+// DELETE Customers
+app.get('/delete-customers/:customerId', async function (req, res) {
+    const { customerId } = req.params;
+
+    // Check if the customerId is in a relationship with an employee
+    const checkCustomerQuery = `SELECT * FROM EmployeeCustomer WHERE customer_id = ${customerId}`;
+    const [involved] = await connection.execute(checkCustomerQuery, [customerId]);
+    if (involved.length > 0) {
+        res.send("Unable to delete because the customer is in a sales relationship of an employee");
+        return;
+    }
+
+    const query = `SELECT * FROM Customers WHERE ${customerId}`;
+    const [customers] = await connection.execute(query);
+    const customerToDelete = customers[0];
+
+    res.render('delete-customers', {
+        'customer': customerToDelete
+    })
+
+})
+
+app.post('/delete-customers/:customerId', async function (req, res) {
+    const { customerId } = req.params;
+    const query = `DELETE FROM Customers WHERE customer_id = ${customerId}`;
+    await connection.execute(query);
+    res.redirect('/');
+})
 
 
 app.listen(3000, () => {
