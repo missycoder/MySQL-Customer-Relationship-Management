@@ -36,7 +36,11 @@ async function main() {
 app.get('/customers', async (req, res) => {
     // array destructuring
     // `execute` function returns the array
-    const [customers] = await connection.execute(`SELECT * FROM Customers INNER JOIN Companies ON Customers.company_id = Companies.company_id`);
+    const [customers] = await connection.execute(`
+    SELECT Customers.*, Companies.name AS company_name FROM Customers JOIN
+    Companies ON Customers.company_id = Companies.company_id
+    ORDER BY first_name
+    `);
     res.render('customers/index', {
         'customers': customers
     })
@@ -58,6 +62,8 @@ app.post('/create-customers', async function (req, res) {
     // object destructuring with rename
     const query = `INSERT INTO Customers(first_name, last_name, rating, company_id) 
     VALUES ("${first_name}", "${last_name}", ${rating}, 1);`
+
+    const response = await connection.execute(query);
 })
 
 
