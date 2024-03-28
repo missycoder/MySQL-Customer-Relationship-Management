@@ -34,7 +34,7 @@ async function main() {
         });
 
         // Route to retrieve and display customers
-        app.get('/customers', async (req, res) => {
+        app.get('/customers', async function (req, res) {
             try {
                 const [customers] = await connection.execute(`
                 SELECT Customers.*, Companies.name AS company_name FROM Customers JOIN
@@ -53,13 +53,17 @@ async function main() {
         // Route to render form for CREATING customers
         app.get('/create-customers', async function (req, res) {
             try {
-                const [companies] = await connection.execute(`SELECT * FROM COMPANIES`);
-                res.render('create-customers', { companies });
+                const [companies] = await connection.execute(`SELECT * FROM Companies`);
+                // console.log('companies', companies);
+                const [employees] = await connection.execute(`SELECT * FROM Employees`);
+                // console.log('employees', employees);
+                res.render('create-customers', { companies: companies, employees: employees });
             } catch (error) {
-                console.error("Error retrieving companies:", error);
+                console.error("Error", error);
                 res.status(500).send("Internal server error");
             }
         });
+
 
         // Route to handle submission of customer creation form
         app.post('/create-customers', async function (req, res) {
