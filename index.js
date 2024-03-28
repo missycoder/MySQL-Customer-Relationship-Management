@@ -134,13 +134,69 @@ async function main() {
             }
         });
 
+        // Route to search for customers based on criteria
+        app.get('/search-customers', async (req, res) => {
+            try {
+                // Extract search criteria from query parameters
+                const { firstName, lastName, rating, companyId } = req.query;
+
+                // selects data from the Customers table, joining with the Companies table 
+                // to include the company name
+                let query = `SELECT Customers.*, Companies.name AS company_name FROM Customers JOIN
+                             Companies ON Customers.company_id = Companies.company_id`;
+
+                // these arrays will be used to store the parameters for the SQL query 
+                // and the conditions for filtering the data
+                const queryParams = [];
+                const conditions = [];
+
+                if (firstName) {
+                    conditions.push(`first_name LIKE ?`);
+                    queryParams.push(`%${firstName}%`);
+                }
+
+                if (lastName) {
+                    conditions.push(`last_name LIKE ?`);
+                    queryParams.push(`%${lastName}%`);
+                }
+
+                if (rating) {
+                    conditions.push(`rating = ?`);
+                    queryParams.push(rating);
+                }
+
+                if (companyId) {
+                    conditions.push(`company_id = ?`);
+                    queryParams.push(companyId);
+                }
+                // If any conditions were added, block appends `WHERE`, joins with 
+                // `and` logical operator
+                if (conditions.length > 0) {
+                    query += ` WHERE ${conditions.join(' AND ')}`;
+                }
+
+                // Regardless of whether conditions were added, results sorted by first_name
+                query += ` ORDER BY first_name`;
+
+                // awaits the result and extracts the customers array from the result
+                const [customers] = await connection.execute(query, queryParams);
+
+                res.render('customers/index', {
+                    'customers': customers
+                });
+            } catch (error) {
+                console.error("Error searching customers:", error);
+                res.status(500).send("Internal server error");
+            }
+        });
+
         // Start the server
         app.listen(3000, () => {
             console.log('Server has started');
         });
     } catch (error) {
         console.error("Error establishing database connection:", error);
-        process.exit(1); // Exit the process if there's an error
+        process.exit(1);
     }
 }
 
