@@ -6,6 +6,12 @@ INSERT INTO Customers (first_name, last_name, rating, company_id)
 VALUES ("Steve", "Jobs", 5, 1),
 ("Bill", "Gates", 3, 2);
 
+-- UPDATE (INSERT) Customers;
+UPDATE Customers SET rating=3
+WHERE customer_id = 20;
+
+-- DELETE Customers;
+DELETE FROM Customers WHERE customer_id = 19;
 
 -- UPDATE an existing row
 UPDATE Companies SET name="Ali Baba Global Finances"
